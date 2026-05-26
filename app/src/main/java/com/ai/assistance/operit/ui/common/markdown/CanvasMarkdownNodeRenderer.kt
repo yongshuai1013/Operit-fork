@@ -182,6 +182,12 @@ private fun splitPlainTextParagraphs(content: CharSequence): List<CharSequence> 
     return paragraphs.filter { it.isNotEmpty() }
 }
 
+private fun stripBlockQuoteMarkers(content: String): String {
+    return content.lines().joinToString("\n") {
+        it.removePrefix("> ").removePrefix(">")
+    }
+}
+
 /**
  * Paint 对象池 - 避免重复创建相同样式的 Paint
  */
@@ -1716,17 +1722,25 @@ private fun renderNodeContent(
                         )
                         .padding(4.dp)
                 ) {
-                    val quoteText = content.lines().joinToString("\n") {
-                        it.removePrefix("> ").removePrefix(">")
-                    }
-                    
-                    SingleTextCanvas(
-                        text = quoteText,
+                    UnifiedCanvasRenderer(
+                        nodeKey = nodeKey,
+                        node = stableNode,
                         textColor = textColor,
-                        fontSize = fontSizes.bodyMedium,
-                        fontWeight = FontWeight.Normal,
+                        bodyMediumSize = fontSizes.bodyMedium,
+                        headlineLargeSize = fontSizes.headlineLarge,
+                        headlineMediumSize = fontSizes.headlineMedium,
+                        headlineSmallSize = fontSizes.headlineSmall,
+                        titleLargeSize = fontSizes.titleLarge,
+                        titleMediumSize = fontSizes.titleMedium,
+                        titleSmallSize = fontSizes.titleSmall,
                         density = density,
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth(),
+                        onLinkClick = onLinkClick,
+                        fillMaxWidth = true,
+                        textSelectionRequest = textSelectionRequest,
+                        selectionState = selectionState,
+                        nodeIndex = index,
+                        isLastNode = isLastNode
                     )
                 }
             }
@@ -3120,6 +3134,31 @@ private fun calculateLayout(
             if (!isLastNode) {
                 currentY += 6f * density.density
             }
+        }
+
+        MarkdownProcessorType.BLOCK_QUOTE -> {
+            val quoteText = stripBlockQuoteMarkers(content)
+            if (quoteText.trimAll().isEmpty()) return LayoutResult(0f, 0f, emptyList())
+
+            val textSizePx = with(density) { bodyMediumSize.toPx() }
+            val textPaint = PaintCache.getTextPaint(
+                textColor,
+                textSizePx,
+                normalTypeface,
+                calculateCanvasLetterSpacingEm(bodyMediumSize, globalLetterSpacingSp)
+            )
+            val layout = LayoutCache.getLayout(
+                quoteText,
+                textPaint,
+                safeAvailableWidthPx,
+                textColor,
+                normalTypeface,
+                lineSpacingMultiplier
+            )
+
+            instructions.add(DrawInstruction.TextLayout(layout, 0f, currentY, layout.text))
+            currentY += layout.height
+            maxWidth = maxOf(maxWidth, calculateActualWidth(layout, 0f, safeAvailableWidthPx))
         }
         
         else -> {

@@ -752,8 +752,11 @@ class ChatViewModel(private val context: Context) : ViewModel() {
         }
     }
 
-    suspend fun loadChatMessageLocatorPreviews(chatId: String): List<ChatMessageLocatorPreview> =
-        chatHistoryDelegate.loadChatMessageLocatorPreviews(chatId)
+    suspend fun loadChatMessageLocatorPreviews(
+        chatId: String,
+        query: String = "",
+    ): List<ChatMessageLocatorPreview> =
+        chatHistoryDelegate.loadChatMessageLocatorPreviews(chatId, query)
 
     suspend fun revealMessageForCurrentChat(targetTimestamp: Long): Boolean =
         chatHistoryDelegate.revealMessageForCurrentChat(targetTimestamp)

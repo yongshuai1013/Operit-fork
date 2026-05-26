@@ -175,6 +175,8 @@ data class WebChatMessagesPage(
 
 @Serializable
 data class WebChatMessageLocatorPreview(
+    @SerialName("message_index")
+    val messageIndex: Int? = null,
     @SerialName("timestamp")
     val timestamp: Long,
     @SerialName("sender")
@@ -385,6 +387,12 @@ data class WebDisplayPreferences(
     val showModelName: Boolean,
     @SerialName("show_model_provider")
     val showModelProvider: Boolean,
+    @SerialName("show_message_token_stats")
+    val showMessageTokenStats: Boolean,
+    @SerialName("show_message_timing_stats")
+    val showMessageTimingStats: Boolean,
+    @SerialName("show_message_timestamp")
+    val showMessageTimestamp: Boolean,
     @SerialName("tool_collapse_mode")
     val toolCollapseMode: String,
     @SerialName("global_user_name")

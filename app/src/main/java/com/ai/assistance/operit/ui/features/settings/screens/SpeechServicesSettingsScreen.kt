@@ -79,6 +79,7 @@ import com.ai.assistance.operit.data.model.ModelOption
 import com.ai.assistance.operit.ui.components.CustomScaffold
 import com.ai.assistance.operit.api.voice.SiliconFlowVoiceProvider
 import com.ai.assistance.operit.api.voice.MimoVoiceProvider
+import com.ai.assistance.operit.api.voice.DoubaoVoiceProvider
 import com.ai.assistance.operit.api.voice.OpenAIRealtimeVoiceProvider
 import com.ai.assistance.operit.api.voice.OpenAIVoiceProvider
 import com.ai.assistance.operit.api.voice.SimpleVoiceProvider
@@ -408,6 +409,7 @@ fun SpeechServicesSettingsScreen(
                                     VoiceServiceFactory.VoiceServiceType.SILICONFLOW_TTS -> stringResource(R.string.speech_services_tts_type_siliconflow)
                                     VoiceServiceFactory.VoiceServiceType.MINIMAX_TTS -> stringResource(R.string.speech_services_tts_type_minimax)
                                     VoiceServiceFactory.VoiceServiceType.MIMO_TTS -> stringResource(R.string.speech_services_tts_type_mimo)
+                                    VoiceServiceFactory.VoiceServiceType.DOUBAO_TTS -> stringResource(R.string.speech_services_tts_type_doubao)
                                     VoiceServiceFactory.VoiceServiceType.OPENAI_TTS -> stringResource(R.string.speech_services_tts_type_openai)
                                     VoiceServiceFactory.VoiceServiceType.VITS_TTS -> stringResource(R.string.speech_services_tts_type_vits)
                                 },
@@ -434,6 +436,7 @@ fun SpeechServicesSettingsScreen(
                                                     VoiceServiceFactory.VoiceServiceType.SILICONFLOW_TTS -> stringResource(R.string.speech_services_tts_type_siliconflow)
                                                     VoiceServiceFactory.VoiceServiceType.MINIMAX_TTS -> stringResource(R.string.speech_services_tts_type_minimax)
                                                     VoiceServiceFactory.VoiceServiceType.MIMO_TTS -> stringResource(R.string.speech_services_tts_type_mimo)
+                                                    VoiceServiceFactory.VoiceServiceType.DOUBAO_TTS -> stringResource(R.string.speech_services_tts_type_doubao)
                                                     VoiceServiceFactory.VoiceServiceType.OPENAI_TTS -> stringResource(R.string.speech_services_tts_type_openai)
                                                     VoiceServiceFactory.VoiceServiceType.VITS_TTS -> stringResource(R.string.speech_services_tts_type_vits)
                                                 },
@@ -442,6 +445,11 @@ fun SpeechServicesSettingsScreen(
                                         },
                                         onClick = {
                                             ttsServiceTypeInput = type
+                                            if (type == VoiceServiceFactory.VoiceServiceType.DOUBAO_TTS) {
+                                                ttsUrlTemplateInput = DoubaoVoiceProvider.DEFAULT_ENDPOINT_URL
+                                                ttsVoiceIdInput = DoubaoVoiceProvider.DEFAULT_VOICE_ID
+                                                ttsContentTypeInput = "application/json"
+                                            }
                                             ttsDropdownExpanded = false
                                         }
                                     )
@@ -1249,6 +1257,113 @@ fun SpeechServicesSettingsScreen(
                                     supportingText = {
                                         Text(
                                             text = stringResource(R.string.speech_services_mimo_voice_id_hint),
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+                                )
+                            }
+                        }
+
+                        AnimatedVisibility(visible = ttsServiceTypeInput == VoiceServiceFactory.VoiceServiceType.DOUBAO_TTS) {
+                            Column(modifier = Modifier.padding(top = 16.dp)) {
+                                Text(
+                                    text = stringResource(R.string.speech_services_doubao_config),
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Medium
+                                )
+
+                                Spacer(modifier = Modifier.height(8.dp))
+
+                                OutlinedTextField(
+                                    value = ttsUrlTemplateInput,
+                                    onValueChange = { ttsUrlTemplateInput = it },
+                                    label = { Text(stringResource(R.string.speech_services_doubao_url)) },
+                                    placeholder = { Text(stringResource(R.string.speech_services_doubao_url_placeholder)) },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    singleLine = true,
+                                    supportingText = {
+                                        Text(
+                                            text = stringResource(R.string.speech_services_doubao_url_hint),
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+                                )
+
+                                Spacer(modifier = Modifier.height(8.dp))
+
+                                OutlinedTextField(
+                                    value = ttsModelNameInput,
+                                    onValueChange = { ttsModelNameInput = it },
+                                    label = { Text(stringResource(R.string.speech_services_doubao_appid)) },
+                                    placeholder = { Text(stringResource(R.string.speech_services_doubao_appid_placeholder)) },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    singleLine = true
+                                )
+
+                                Spacer(modifier = Modifier.height(8.dp))
+
+                                OutlinedTextField(
+                                    value = ttsApiKeyInput,
+                                    onValueChange = { ttsApiKeyInput = it },
+                                    label = { Text(stringResource(R.string.speech_services_doubao_token)) },
+                                    placeholder = { Text(stringResource(R.string.speech_services_doubao_token_placeholder)) },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    singleLine = true
+                                )
+
+                                Spacer(modifier = Modifier.height(8.dp))
+
+                                var doubaoVoiceDropdownExpanded by remember { mutableStateOf(false) }
+                                val doubaoVoices = remember { DoubaoVoiceProvider.AVAILABLE_VOICES }
+                                val selectedDoubaoVoiceName = remember(ttsVoiceIdInput) {
+                                    doubaoVoices.find { it.id == ttsVoiceIdInput }?.name
+                                        ?: context.getString(R.string.speech_services_doubao_voice_custom)
+                                }
+
+                                ExposedDropdownMenuBox(
+                                    expanded = doubaoVoiceDropdownExpanded,
+                                    onExpandedChange = { doubaoVoiceDropdownExpanded = it }
+                                ) {
+                                    OutlinedTextField(
+                                        value = selectedDoubaoVoiceName,
+                                        onValueChange = {},
+                                        readOnly = true,
+                                        label = { Text(stringResource(R.string.speech_services_doubao_voice_select)) },
+                                        trailingIcon = {
+                                            Icon(Icons.Default.ArrowDropDown, stringResource(R.string.speech_services_doubao_voice_select_icon))
+                                        },
+                                        modifier = Modifier.menuAnchor().fillMaxWidth()
+                                    )
+                                    ExposedDropdownMenu(
+                                        expanded = doubaoVoiceDropdownExpanded,
+                                        onDismissRequest = { doubaoVoiceDropdownExpanded = false }
+                                    ) {
+                                        doubaoVoices.forEach { voice ->
+                                            DropdownMenuItem(
+                                                text = { Text("${voice.name} (${voice.id})") },
+                                                onClick = {
+                                                    ttsVoiceIdInput = voice.id
+                                                    doubaoVoiceDropdownExpanded = false
+                                                }
+                                            )
+                                        }
+                                    }
+                                }
+
+                                Spacer(modifier = Modifier.height(8.dp))
+
+                                OutlinedTextField(
+                                    value = ttsVoiceIdInput,
+                                    onValueChange = { ttsVoiceIdInput = it },
+                                    label = { Text(stringResource(R.string.speech_services_doubao_voice_id)) },
+                                    placeholder = { Text(stringResource(R.string.speech_services_doubao_voice_id_placeholder)) },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    singleLine = true,
+                                    supportingText = {
+                                        Text(
+                                            text = stringResource(R.string.speech_services_doubao_voice_id_hint),
                                             style = MaterialTheme.typography.bodySmall,
                                             color = MaterialTheme.colorScheme.onSurfaceVariant
                                         )

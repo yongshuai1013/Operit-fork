@@ -216,6 +216,9 @@ class SpeechServicesPreferences(private val context: Context) {
                 VoiceServiceFactory.VoiceServiceType.MIMO_TTS -> {
                     httpConfig?.let { prefs[TTS_HTTP_CONFIG] = serializerJson.encodeToString(it) }
                 }
+                VoiceServiceFactory.VoiceServiceType.DOUBAO_TTS -> {
+                    httpConfig?.let { prefs[TTS_HTTP_CONFIG] = serializerJson.encodeToString(it) }
+                }
                 VoiceServiceFactory.VoiceServiceType.OPENAI_TTS -> {
                     httpConfig?.let { prefs[TTS_HTTP_CONFIG] = serializerJson.encodeToString(it) }
                 }

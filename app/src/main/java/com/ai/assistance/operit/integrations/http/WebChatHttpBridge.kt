@@ -189,6 +189,7 @@ class WebChatHttpBridge(
             chatIdFrom(session.uri, "$CHATS_PATH/", "/message-locator") != null &&
                 session.method == NanoHTTPD.Method.GET ->
                 handleMessageLocator(
+                    session,
                     requireNotNull(chatIdFrom(session.uri, "$CHATS_PATH/", "/message-locator"))
                 )
 
@@ -831,7 +832,10 @@ class WebChatHttpBridge(
         return jsonResponse(NanoHTTPD.Response.Status.OK, page)
     }
 
-    private fun handleMessageLocator(chatId: String): NanoHTTPD.Response {
+    private fun handleMessageLocator(
+        session: NanoHTTPD.IHTTPSession,
+        chatId: String
+    ): NanoHTTPD.Response {
         if (!runBlocking { chatHistoryManager.chatExists(chatId) }) {
             return jsonResponse(
                 NanoHTTPD.Response.Status.NOT_FOUND,
@@ -839,8 +843,10 @@ class WebChatHttpBridge(
             )
         }
 
+        val query = session.parameters["query"]?.firstOrNull().orEmpty()
         val previews = runBlocking {
-            chatHistoryManager.loadChatMessageLocatorPreviews(chatId).map(::buildWebMessageLocatorPreview)
+            chatHistoryManager.loadChatMessageLocatorPreviews(chatId, query)
+                .map(::buildWebMessageLocatorPreview)
         }
         return jsonResponse(NanoHTTPD.Response.Status.OK, previews)
     }
@@ -964,7 +970,7 @@ class WebChatHttpBridge(
 
         val snapshot = runBlocking {
             val resolved = resolveThemePreferenceSnapshot()
-            val display = resolveDisplayPreferencesSnapshot()
+            val display = resolveDisplayPreferencesSnapshot(resolved)
             buildThemeSnapshot(resolved, display)
         }
         return jsonResponse(NanoHTTPD.Response.Status.OK, snapshot)
@@ -1686,6 +1692,7 @@ class WebChatHttpBridge(
         preview: ChatMessageLocatorPreview
     ): WebChatMessageLocatorPreview {
         return WebChatMessageLocatorPreview(
+            messageIndex = preview.messageIndex,
             timestamp = preview.timestamp,
             sender = normalizeSender(preview.sender),
             previewContent = preview.previewContent,
@@ -2219,12 +2226,17 @@ class WebChatHttpBridge(
         }
     }
 
-    private suspend fun resolveDisplayPreferencesSnapshot(): WebDisplayPreferences {
+    private suspend fun resolveDisplayPreferencesSnapshot(
+        snapshot: ThemePreferenceSnapshot
+    ): WebDisplayPreferences {
         return WebDisplayPreferences(
-            showUserName = displayPreferencesManager.showUserName.first(),
-            showRoleName = displayPreferencesManager.showRoleName.first(),
-            showModelName = displayPreferencesManager.showModelName.first(),
-            showModelProvider = displayPreferencesManager.showModelProvider.first(),
+            showUserName = snapshot.showUserName,
+            showRoleName = snapshot.showRoleName,
+            showModelName = snapshot.showModelName,
+            showModelProvider = snapshot.showModelProvider,
+            showMessageTokenStats = snapshot.showMessageTokenStats,
+            showMessageTimingStats = snapshot.showMessageTimingStats,
+            showMessageTimestamp = snapshot.showMessageTimestamp,
             toolCollapseMode = displayPreferencesManager.toolCollapseMode.first().value,
             globalUserName = displayPreferencesManager.globalUserName.first()
                 ?.trim()
@@ -2242,7 +2254,6 @@ class WebChatHttpBridge(
         val globalUserAvatarUri = displayPreferencesManager.globalUserAvatarUri.first()
             ?.trim()
             ?.takeIf { it.isNotBlank() }
-        val avatarCornerRadius = userPreferencesManager.avatarCornerRadius.first()
         val cursorUserLiquidGlass = userPreferencesManager.cursorUserBubbleLiquidGlass.first()
         val cursorUserWaterGlass = userPreferencesManager.cursorUserBubbleWaterGlass.first()
         val bubbleUserLiquidGlass = userPreferencesManager.bubbleUserBubbleLiquidGlass.first()
@@ -2344,7 +2355,7 @@ class WebChatHttpBridge(
             ),
             avatars = WebAvatarTheme(
                 shape = snapshot.avatarShape,
-                cornerRadius = avatarCornerRadius,
+                cornerRadius = snapshot.avatarCornerRadius,
                 userAvatarUrl = (snapshot.customUserAvatarUri?.takeIf { it.isNotBlank() } ?: globalUserAvatarUri)?.let {
                     registerAsset(it, guessMimeType(it))
                 },

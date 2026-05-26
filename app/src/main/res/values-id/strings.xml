@@ -6798,7 +6798,6 @@ Sekarang Anda dapat menggunakan mode AutoGLM di antarmuka percakapan.</string>
     <string name="chat_regenerating_single">Sedang menghasilkan ulang jawaban ini...</string>
     <string name="chat_regenerate_single_failed">Gagal menghasilkan ulang satu: %1$s</string>
     <string name="chat_regenerate_busy">Saat ini ada pesan yang sedang diproses, silakan coba lagi nanti</string>
-    <string name="chat_regenerate_single_tool_unsupported">Jawaban yang berisi panggilan alat belum mendukung regenerasi satu per satu</string>
     <string name="chat_switch_variant_failed">Gagal mengganti jawaban: %1$s</string>
     <string name="chat_message_variant_counter">%1$d/%2$d</string>
     <string name="chat_previous_variant">Jawaban sebelumnya</string>

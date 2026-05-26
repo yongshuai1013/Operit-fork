@@ -2171,10 +2171,22 @@ class ChatHistoryManager private constructor(private val context: Context) {
         }
     }
 
-    suspend fun loadChatMessageLocatorPreviews(chatId: String): List<ChatMessageLocatorPreview> {
+    suspend fun loadChatMessageLocatorPreviews(
+        chatId: String,
+        query: String = "",
+    ): List<ChatMessageLocatorPreview> {
         return withContext(Dispatchers.IO) {
             try {
-                messageDao.getLocatorPreviewsForChat(chatId, LOCATOR_PREVIEW_CHAR_COUNT)
+                val normalizedQuery = query.trim()
+                if (normalizedQuery.isBlank()) {
+                    messageDao.getLocatorPreviewsForChat(chatId, LOCATOR_PREVIEW_CHAR_COUNT)
+                } else {
+                    messageDao.searchLocatorPreviewsForChat(
+                        chatId = chatId,
+                        query = normalizedQuery,
+                        previewCharCount = LOCATOR_PREVIEW_CHAR_COUNT,
+                    )
+                }
             } catch (e: Exception) {
                 AppLogger.e(TAG, "加载聊天定位轻量预览失败", e)
                 emptyList()

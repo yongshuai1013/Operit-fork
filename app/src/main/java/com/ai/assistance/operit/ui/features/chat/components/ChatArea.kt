@@ -80,7 +80,7 @@ import com.ai.assistance.operit.data.model.AiReference
 import com.ai.assistance.operit.data.model.ChatMessage
 import com.ai.assistance.operit.data.model.ChatMessageDisplayMode
 import com.ai.assistance.operit.data.model.ChatMessageLocatorPreview
-import com.ai.assistance.operit.data.preferences.DisplayPreferencesManager
+import com.ai.assistance.operit.data.preferences.UserPreferencesManager
 
 import androidx.compose.ui.window.PopupProperties
 
@@ -189,7 +189,7 @@ fun ChatArea(
     onLoadOlderDisplayWindow: (() -> Unit)? = null,
     onLoadNewerDisplayWindow: (() -> Unit)? = null,
     onShowLatestDisplayWindow: (() -> Unit)? = null,
-    loadMessageLocatorEntries: (suspend (String) -> List<ChatMessageLocatorPreview>)? = null,
+    loadMessageLocatorEntries: (suspend (String, String) -> List<ChatMessageLocatorPreview>)? = null,
     onRevealMessageForLocator: (suspend (Long) -> Boolean)? = null,
     topPadding: Dp = 0.dp,
     bottomPadding: Dp = 0.dp,
@@ -218,13 +218,13 @@ fun ChatArea(
     val context = LocalContext.current
     val density = LocalDensity.current
     val coroutineScope = rememberCoroutineScope()
-    val displayPreferencesManager = remember { DisplayPreferencesManager.getInstance(context) }
+    val preferencesManager = remember { UserPreferencesManager.getInstance(context) }
     val showMessageTokenStats by
-        displayPreferencesManager.showMessageTokenStats.collectAsState(initial = false)
+        preferencesManager.showMessageTokenStats.collectAsState(initial = false)
     val showMessageTimingStats by
-        displayPreferencesManager.showMessageTimingStats.collectAsState(initial = false)
+        preferencesManager.showMessageTimingStats.collectAsState(initial = false)
     val showMessageTimestamp by
-        displayPreferencesManager.showMessageTimestamp.collectAsState(initial = false)
+        preferencesManager.showMessageTimestamp.collectAsState(initial = false)
     var viewportHeightPx by remember { mutableStateOf(0) }
     var viewportTopInWindowPx by remember { mutableStateOf(0f) }
     val messageAnchors = remember(currentChatId) { mutableStateMapOf<Long, ChatScrollMessageAnchor>() }
